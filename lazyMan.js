@@ -57,24 +57,24 @@ function LazyMan1(name) {
 
 function LazyMan(name) {
     const actions = {
-        stack: [{ log: `Hi I am ${name}` }],
+        queue: [{ log: `Hi I am ${name}` }],
         sleep: function (time) {
-            this.stack.push({ time })
+            this.queue.push({ time })
             return this
         },
         sleepFirst: function (time) {
-            this.stack.unshift({ time })
+            this.queue.unshift({ time })
             return this
         },
         eat: function (name) {
-            this.stack.push({ log: `I am eating ${name}` })
+            this.queue.push({ log: `I am eating ${name}` })
             return this
         },
         [Symbol.iterator]: function * () {
-            while (this.stack.length) {
-                const stack = this.stack.shift()
-                const { log, time } = stack
-                console.log(stack)
+            while (this.queue.length) {
+                const queue = this.queue.shift()
+                const { log, time } = queue
+                console.log(queue)
                 yield new Promise(resolve => {
                     setTimeout(() => {
                         resolve(log)
