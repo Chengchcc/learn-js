@@ -178,3 +178,115 @@ MyPromise.race = function (promises) {
         )
     })
 }
+
+MyPromise.allSettled = function (promises) {
+    return new MyPromise(function (resolve, reject) {
+        let result = [];
+        let count = 0;
+        promises.forEach(function (promise, index) {
+            promise.then(function (value) {
+                result[index] = {
+                    status: 'fulfilled',
+                    value: value
+                };
+                count++;
+                if (count === promises.length) {
+                    resolve(result);
+                }
+            }, function (reason) {
+                result[index] = {
+                    status: 'rejected',
+                    reason: reason
+                };
+                count++;
+                if (count === promises.length) {
+                    resolve(result);
+                }
+            });
+        });
+    });
+}
+
+MyPromise.any = function (promises) {
+    return new MyPromise(function (resolve, reject) {
+        let count = 0;
+        promises.forEach(function (promise, index) {
+            promise.then(function (value) {
+                resolve(value);
+            }, function (reason) {
+                count++;
+                if (count === promises.length) {
+                    reject(reason);
+                }
+            });
+        });
+    });
+}
+
+
+function promiseLimit(concurrency) {
+    const queue = []
+    let outstanding = 0
+
+    const next = () => {
+        outstanding--
+        if (outstanding < concurrency && queue.length) {
+            dequeue()
+        }
+    }
+
+    async function run(fn) {
+        outstanding++
+        try {
+            const res = await MyPromise.resolve(fn())
+            return res
+        } catch (err) {
+            throw err
+        } finally {
+            next()
+        }
+    }
+
+    function dequeue() {
+        const job = queue.shift()
+        if (job) {
+            run(job.fn).then(job.resolve).catch(job.reject)
+        }
+    }
+
+    function enqueue(fn) {
+        return new MyPromise((resolve, reject) => {
+            queue.push({ fn, resolve, reject })
+        })
+    }
+
+    const generator = (fn) => {
+        if (outstanding > concurrency) {
+            return enqueue(fn)
+        } else {
+            return run(fn)
+        }
+    }
+
+    return generator
+}
+
+const limit = promiseLimit(4)
+
+function range(start, end, step = 1) {
+    function* gen() {
+        let x = start
+        while (x < end) {
+            yield x += step
+        }
+    }
+    return {
+        [Symbol.iterator]: gen
+    }
+}
+
+
+MyPromise.all([...range(0, 20)].map(x => limit(async () => {
+    console.log(`job ${x} executed`)
+    return new MyPromise(resolve => setTimeout(() => resolve(x), 1000))
+})))
