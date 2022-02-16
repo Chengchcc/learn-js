@@ -1,29 +1,19 @@
-function debounce(fn, wait, immediate) {
-    let timeout, result
-    let debounced = function(){
-        const context =this
-        const args = arguments
-        if(timeout){
-            clearTimeout(timeout)
+function debounce(fuc, delay, immediate){
+    let timer = null;
+    function debounced(){
+        let args = arguments, ctx = this;
+        if(immediate && !timer){
+            fuc.apply(ctx, args);
         }
-        if(immediate){
-            let callNow = !timeout
-            timeout = setTimeout(() => {
-                timeout = null
-            }, wait)
-            if(callNow){
-                result = fn.apply(context, args)
-            }
-        }else {
-            timeout = setTimeout(() => {
-                result = fn.apply(context, args)
-            }, wait)
+        if(timer){
+            clearTimeout(timer);
         }
-        return result
+        timer = setTimeout(function(){
+            fuc.apply(ctx, args);
+        }, delay);
     }
     debounced.cancel = function(){
-        clearTimeout(timeout)
-        timeout = null
+        clearTimeout(timer);
     }
-    return debounced
+    return debounced;
 }

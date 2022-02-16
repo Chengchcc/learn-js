@@ -169,3 +169,25 @@ Array.prototype.myFindIndex = function(predicate){
 }
 
 
+Array.prototype.mySplice = function(start, deleteCount){
+    let O = Object(this);
+    let len = O.length >>> 0;
+    let k = start | 0;
+    if(k < 0){
+        k = Math.max(len + k, 0);
+    }
+    let n = Math.min(Math.max(deleteCount, 0), len - k);
+    let A = new Array(n);
+    for(let i = 0; i < n; i++){
+        A[i] = O[k + i];
+    }
+    if(n < len - k){
+        for(let i = k + n; i < len; i++){
+            O[i - n] = O[i];
+        }
+    }
+    for(let i = 0; i < deleteCount; i++){
+        delete O[k + i];
+    }
+    return A;
+}
